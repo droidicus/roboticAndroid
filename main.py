@@ -10,6 +10,7 @@ from tqdm import tqdm
 
 # Constants and such
 NOW = datetime.datetime.utcnow()
+# LOOKBACK_AFTER = None
 # LOOKBACK_AFTER = NOW - datetime.timedelta(days=365)
 # LOOKBACK_AFTER = NOW - datetime.timedelta(days=30)
 # LOOKBACK_AFTER = NOW - datetime.timedelta(days=1)
@@ -24,7 +25,7 @@ client = discord.Client()
 
 @client.event
 async def on_disconnect():
-    print('WARNING: Recieved `on_disconnect` event!')
+    print('INFO: Recieved `on_disconnect` event!')
 
 @client.event
 async def on_ready():
@@ -42,7 +43,7 @@ async def on_ready():
                     print(f'\n**** Processing channel: {channel} ****')
 
                     # Process each element in the history
-                    with tqdm(desc=f'Messages processed so far in {channel}') as pbar:
+                    with tqdm(unit_scale=True, desc=f'Messages processed so far in {channel}') as pbar:
                         async for elem in channel.history(limit=None, after=LOOKBACK_AFTER, before=NOW):
                             # update bar
                             pbar.update(1)
@@ -89,7 +90,7 @@ async def on_ready():
     # Close the bot when we are complete, this exits the bot
     print('\nDONE!')
     await client.close()
-    print('closed')
+    print('Closing loop, bot shutting down.')
 
 # # This method is called for each new message that the bot can see
 # @client.event
