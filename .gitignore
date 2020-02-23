@@ -138,5 +138,5 @@ dmypy.json
 *.parquet
 
 # Token file
-#token
+token
 mytoken
