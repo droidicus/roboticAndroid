@@ -127,3 +127,16 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# Old folder
+.old/
+
+# vscode folder
+.vscode/
+
+# Parquet files
+*.parquet
+
+# Token file
+#token
+mytoken
