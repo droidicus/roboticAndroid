@@ -140,3 +140,9 @@ dmypy.json
 # Token file
 token
 mytoken
+
+# Private files
+private/
+
+# png files
+*.png

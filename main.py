@@ -13,8 +13,9 @@ NOW = datetime.datetime.utcnow()
 # LOOKBACK_AFTER = None
 # LOOKBACK_AFTER = NOW - datetime.timedelta(days=365)
 # LOOKBACK_AFTER = NOW - datetime.timedelta(days=30)
-# LOOKBACK_AFTER = NOW - datetime.timedelta(days=1)
-LOOKBACK_AFTER = NOW - datetime.timedelta(hours=1)
+# LOOKBACK_AFTER = NOW - datetime.timedelta(days=7)
+LOOKBACK_AFTER = NOW - datetime.timedelta(days=1)
+# LOOKBACK_AFTER = NOW - datetime.timedelta(hours=1)
 FILE_NAME = 'test'
 OUTPUT_DATA_FILE = f'{FILE_NAME}_data.parquet'
 OUTPUT_METADATA_FILE = f'{FILE_NAME}_meta.parquet'
@@ -29,57 +30,68 @@ async def on_disconnect():
 
 @client.event
 async def on_ready():
-    print('We have logged in as {0.user}'.format(client))
+    def message_to_dict(msg):
+        return {
+            'author': str(msg.author),
+            'author_name': msg.author.name,
+            'author_displayname': msg.author.nick if msg.author == discord.member.Member else '',
+            'author_id': msg.author.id,
+            'content': msg.content,
+            'chanel': str(msg.channel),
+            'channel_name': msg.channel.name,
+            'channel_id': msg.channel.id,
+            # 'mentions': msg.mentions,
+            'guild': str(msg.guild),
+            'guild_name': msg.guild.name,
+            'guild_id': msg.guild.id,
+            # 'reactions': msg.reactions,
+            'type': str(msg.type),
+            'creation_datetime': msg.created_at,
+        }
+
+    print(f'We have logged in as {client}')
+
+    # Start gathering all of the data
+    total_messages = 0
     data = pd.DataFrame()
-    # total_msg_count = 0
     for guild in client.guilds:
-        for channel in guild.channels:
-            # channel_msg_count = 0
+        # Go through each guild (server)
+        for channel in guild.text_channels:
+            # Go through each text_channel
             channel_elem_dict_list = []
             if channel.permissions_for(member=guild.me).view_channel:
-                if type(channel) != discord.channel.VoiceChannel and\
-                   type(channel) != discord.channel.CategoryChannel:
-                    # Don't process channels without text
-                    print(f'\n**** Processing channel: {channel} ****')
+                # If we have access to the channel (will error if you attempt to get history from any channel you don't have access to)
+                print('')
+                print(f'**** Processing channel: {channel} ****')
 
-                    # Process each element in the history
-                    with tqdm(unit_scale=True, desc=f'Messages processed so far in {channel}') as pbar:
-                        async for elem in channel.history(limit=None, after=LOOKBACK_AFTER, before=NOW):
-                            # update bar
-                            pbar.update(1)
+                # Process each element in the history, with a nice progress indicator
+                with tqdm(unit_scale=True, desc=f'Messages processed so far in {channel}') as pbar:
+                    async for elem in channel.history(limit=None, after=LOOKBACK_AFTER, before=NOW):
+                        # update bar and count
+                        pbar.update(1)
+                        total_messages += 1
 
-                            # Add dict of data to the list
-                            channel_elem_dict_list.append({
-                                'author': str(elem.author),
-                                'author_name': elem.author.name,
-                                'author_displayname': elem.author.nick if elem.author == discord.member.Member else '',
-                                'author_id': elem.author.id,
-                                'content': elem.content,
-                                'chanel': str(elem.channel),
-                                'channel_name': elem.channel.name,
-                                'channel_id': elem.channel.id,
-                                # 'mentions': elem.mentions,
-                                'guild': str(elem.guild),
-                                'guild_name': elem.guild.name,
-                                'guild_id': elem.guild.id,
-                                # 'reactions': elem.reactions,
-                                'type': str(elem.type),
-                                'creation_datetime': elem.created_at,
-                            })
+                        # Add dict of data to the list
+                        channel_elem_dict_list.append(message_to_dict(elem))
 
-                        # Channel complete, append data to dataframe
-                        data = data.append(channel_elem_dict_list, ignore_index=True)
+                    # Channel complete, append data to dataframe
+                    data = data.append(channel_elem_dict_list, ignore_index=True)
 
     # Info banner
     then = datetime.datetime.utcnow()
-    print(f'\nProcessing took: {then-NOW}')
+    print('')
     print('*******************************************************************')
     print(f'Report for {LOOKBACK_AFTER} to {NOW}')
     print('*******************************************************************')
+    print(f'Processing took: {then-NOW}')
+    print(f'Total messages parsed: {total_messages}')
+    print(f'Parsing speed: {total_messages/(then-NOW).total_seconds():.2f} msg/sec')
 
     # Save data and metadata to parquet files
-    print(f'\nSaving data to - {OUTPUT_DATA_FILE}')
+    print('')
+    print(f'Saving data to - {OUTPUT_DATA_FILE}')
     data.to_parquet(OUTPUT_DATA_FILE)
+    print(f'Saving metadata to - {OUTPUT_METADATA_FILE}')
     pd.DataFrame([{
         'file_version': FILE_VERSION,
         'start_datetime': LOOKBACK_AFTER,
@@ -88,7 +100,8 @@ async def on_ready():
         }]).to_parquet(OUTPUT_METADATA_FILE)
 
     # Close the bot when we are complete, this exits the bot
-    print('\nDONE!')
+    print('')
+    print('DONE!')
     await client.close()
     print('Closing loop, bot shutting down.')
 
@@ -104,4 +117,5 @@ if __name__ == "__main__":
         token = f.readline()
 
     # Bring the bot to life
+    print('Starting up bot...')
     client.run(token)
