@@ -136,6 +136,7 @@ dmypy.json
 
 # Parquet files
 *.parquet
+data/
 
 # Token file
 token
@@ -146,3 +147,4 @@ private/
 
 # png files
 *.png
+png/
