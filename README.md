@@ -11,7 +11,7 @@ Discord bot for data analytics
 # Set up environment on a Window 10 system
 ## Install Miniconda
 * See instructions here: https://docs.conda.io/en/latest/miniconda.html
-## Base environment setup
+## nbstripout setup
 ```
 conda create -n nbstripout
 conda activate nbstripout
