@@ -69,7 +69,7 @@ conda deactivate
 * Navigate to the repository clone/copy
 ```
 conda activate discord
-python discord.py
+python collect.py
 conda deactivate
 ```
 ## How to launch jupyter lab for data analysis
@@ -80,6 +80,6 @@ conda activate jupyterlab
 jupyter lab
 ```
 * Open the Jupyter Lab environment in the browser of your choice
-* Open `main.ipynb`
+* Open `analysis.ipynb`
 * Ensure that the `discord` python environment is selected
 * Run the cells of interest
